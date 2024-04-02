@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatting</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chat-container {
+            width: 500px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow-y: scroll;
+            max-height: 350px;
+        }
+
+        ul{
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .message {
+            background-color: #e6e6e6;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+
+        .sender {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .timestamp {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        input[type=text] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type=submit],
+        .btn {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type=submit]:hover {
+            background-color: #45a049;
+        }
+
+        #side-form,
+        #side-chat {
+            border-radius: 5px;
+            background-color: #f2f2f2;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="side-form">
+        <form id="form-username">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required placeholder="Your username..">
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    <div id="side-chat">
+        <div class="chat-container">
+            <ul id="messagesList">
+            </ul>
+        </div>
+        <div id="control">
+            <input type="text" id="messageInput" placeholder="Type your message">
+            <button class="btn" id="send-msg">Send</button>
+        </div>
+    </div>
+    <script type="module">
+        import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+        let send_msg = document.querySelector("#send-msg");
+        let side_form = document.querySelector("#side-form");
+        let side_chat = document.querySelector("#side-chat");
+        let form = document.querySelector("#form-username");
+        let username = "";
+        side_chat.style.display = 'none';
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            username = form.username.value;
+            side_form.style.display = 'none';
+            side_chat.style.display = 'flex';
+        });
+
+
+        const socket = io();
+        send_msg.onclick = () => {
+            let time = new Date();
+            const messageInput = document.getElementById('messageInput');
+            const message = username + ";" + messageInput.value.trim() + ";" + time;
+            if (message !== '') {
+                socket.emit('message', message);
+                messageInput.value = '';
+            }
+        }
+        socket.on('message', (msg) => {
+            let username = msg.split(";")[0];
+            let mesg = msg.split(";")[1];
+            let time = msg.split(";")[2];
+            const currentDate = new Date(time);
+            const formattedTime = currentDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const messagesList = document.getElementById('messagesList');
+            let message = ` <li class="message">
+                    <span class="sender">${username}:</span> ${mesg}
+                    <span class="timestamp">${formattedTime}</span>
+                </li>`;
+            messagesList.insertAdjacentHTML('afterbegin', message)
+        });
+    </script>
+</body>
+
+</html>
